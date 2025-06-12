@@ -39,3 +39,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+.cursor
+
+# 除了README.md，其他md文件都忽略
+*.md
+!README.md
