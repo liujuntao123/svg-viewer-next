@@ -31,10 +31,11 @@ export const extractSVGContent = (htmlContent) => {
   // 移除注释
   const cleaned = htmlContent.replace(/<!--[\s\S]*?-->/g, '');
   
-  // 尝试提取SVG标签
-  const svgMatch = cleaned.match(/<svg[\s\S]*?<\/svg>/i);
-  if (svgMatch) {
-    return svgMatch[0];
+  // 尝试提取SVG标签（支持嵌套和多个SVG）
+  const svgMatches = cleaned.match(/<svg[\s\S]*?<\/svg>/gi);
+  if (svgMatches && svgMatches.length > 0) {
+    // 如果有多个SVG，返回第一个完整的
+    return svgMatches[0];
   }
   
   // 如果内容已经是SVG，直接返回
@@ -74,7 +75,120 @@ export const extractBodyContent = (htmlContent) => {
 };
 
 /**
- * 智能内容提取
+ * 从代码块中提取内容
+ * @param {string} content - 包含代码块的内容
+ * @returns {string|null} 提取的代码或null
+ */
+export const extractFromCodeBlocks = (content) => {
+  // 匹配各种代码块格式
+  const codeBlockPatterns = [
+    // Markdown 代码块
+    /```(?:html|xml|svg)?\s*\n?([\s\S]*?)\n?```/gi,
+    // 单行代码块
+    /`([^`]*(?:<svg|<html)[^`]*)`/gi,
+    // HTML 转义的代码块
+    /&lt;svg[\s\S]*?&lt;\/svg&gt;/gi,
+  ];
+
+  for (const pattern of codeBlockPatterns) {
+    const matches = content.match(pattern);
+    if (matches && matches.length > 0) {
+      let extracted = matches[0];
+      
+      // 清理 markdown 标记
+      extracted = extracted.replace(/```(?:html|xml|svg)?\s*\n?/gi, '');
+      extracted = extracted.replace(/\n?```$/gi, '');
+      extracted = extracted.replace(/^`|`$/g, '');
+      
+      // 解码 HTML 实体
+      extracted = extracted.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
+      
+      // 检查是否是有效的 SVG 或 HTML
+      if (extracted.includes('<svg') || extracted.includes('<html') || extracted.includes('<!DOCTYPE')) {
+        return extracted.trim();
+      }
+    }
+  }
+  
+  return null;
+};
+
+/**
+ * 清理和格式化内容
+ * @param {string} content - 原始内容
+ * @returns {string} 清理后的内容
+ */
+export const cleanContent = (content) => {
+  if (!content || typeof content !== 'string') {
+    return '';
+  }
+  
+  let cleaned = content;
+  
+  // 移除常见的无关前缀/后缀
+  cleaned = cleaned.replace(/^[\s\S]*?(?=<(?:svg|html|!DOCTYPE))/i, '');
+  cleaned = cleaned.replace(/(?:<\/(?:svg|html)>)[\s\S]*$/i, (match) => {
+    return match.substring(0, match.indexOf('>') + 1);
+  });
+  
+  // 移除多余的空白字符，但保留必要的格式
+  cleaned = cleaned.replace(/\n\s*\n\s*\n/g, '\n\n'); // 多个连续空行 -> 两个空行
+  cleaned = cleaned.replace(/^\s+|\s+$/g, ''); // 移除首尾空白
+  
+  // 解码常见的 HTML 实体
+  const htmlEntities = {
+    '&lt;': '<',
+    '&gt;': '>',
+    '&amp;': '&',
+    '&quot;': '"',
+    '&#39;': "'",
+    '&nbsp;': ' '
+  };
+  
+  for (const [entity, char] of Object.entries(htmlEntities)) {
+    cleaned = cleaned.replace(new RegExp(entity, 'g'), char);
+  }
+  
+  return cleaned;
+};
+
+/**
+ * 使用 DOM 解析验证和提取内容
+ * @param {string} content - 要解析的内容
+ * @returns {string|null} 提取的有效内容或null
+ */
+export const extractWithDOMParser = (content) => {
+  try {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(content, 'text/html');
+    
+    // 检查解析错误
+    const parseError = doc.querySelector('parsererror');
+    if (parseError) {
+      return null;
+    }
+    
+    // 尝试提取 SVG
+    const svgElements = doc.querySelectorAll('svg');
+    if (svgElements.length > 0) {
+      return svgElements[0].outerHTML;
+    }
+    
+    // 尝试提取 body 内容
+    const body = doc.body;
+    if (body && body.children.length > 0) {
+      return body.innerHTML.trim();
+    }
+    
+    return null;
+  } catch (error) {
+    console.warn('DOM parsing failed:', error);
+    return null;
+  }
+};
+
+/**
+ * 智能内容提取（增强版）
  * @param {string} content - 原始内容
  * @param {boolean} preferSVG - 是否优先提取SVG
  * @returns {string} 提取的内容
@@ -86,22 +200,67 @@ export const smartExtract = (content, preferSVG = true) => {
   
   const trimmed = content.trim();
   
-  // 如果内容已经是纯SVG或HTML，直接返回
+  // 如果内容已经是纯SVG或HTML，先清理再返回
   if (trimmed.startsWith('<svg') || trimmed.startsWith('<!DOCTYPE') || trimmed.startsWith('<html')) {
-    return preferSVG ? extractSVGContent(trimmed) : extractBodyContent(trimmed);
+    const cleaned = cleanContent(trimmed);
+    return preferSVG ? extractSVGContent(cleaned) : extractBodyContent(cleaned);
   }
   
-  // 检查是否包含SVG
-  if (trimmed.includes('<svg')) {
-    return extractSVGContent(trimmed);
+  // 1. 尝试从代码块中提取
+  const fromCodeBlocks = extractFromCodeBlocks(content);
+  if (fromCodeBlocks) {
+    const cleaned = cleanContent(fromCodeBlocks);
+    return preferSVG ? extractSVGContent(cleaned) : extractBodyContent(cleaned);
   }
   
-  // 检查是否包含body
-  if (trimmed.includes('<body')) {
-    return extractBodyContent(trimmed);
+  // 2. 尝试使用 DOM 解析器
+  const fromDOM = extractWithDOMParser(content);
+  if (fromDOM) {
+    return fromDOM;
   }
   
-  return content;
+  // 3. 使用正则表达式进行模式匹配
+  let extracted = null;
+  
+  if (preferSVG) {
+    // 尝试提取 SVG
+    const svgMatch = content.match(/<svg[\s\S]*?<\/svg>/gi);
+    if (svgMatch && svgMatch.length > 0) {
+      extracted = svgMatch[0];
+    }
+  }
+  
+  if (!extracted) {
+    // 尝试提取 HTML 文档
+    const htmlMatch = content.match(/<!DOCTYPE[\s\S]*?<\/html>/gi) || 
+                     content.match(/<html[\s\S]*?<\/html>/gi);
+    if (htmlMatch && htmlMatch.length > 0) {
+      extracted = htmlMatch[0];
+    }
+  }
+  
+  if (!extracted) {
+    // 尝试提取 body 内容
+    const bodyMatch = content.match(/<body[^>]*>[\s\S]*?<\/body>/gi);
+    if (bodyMatch && bodyMatch.length > 0) {
+      extracted = bodyMatch[0];
+    }
+  }
+  
+  // 4. 如果找到了内容，清理并返回
+  if (extracted) {
+    const cleaned = cleanContent(extracted);
+    return preferSVG ? extractSVGContent(cleaned) : extractBodyContent(cleaned);
+  }
+  
+  // 5. 最后的尝试：查找任何 XML/HTML 标签
+  const tagMatch = content.match(/<[^>]+>[\s\S]*?<\/[^>]+>/);
+  if (tagMatch) {
+    return cleanContent(tagMatch[0]);
+  }
+  
+  // 如果都没有找到，返回清理后的原内容
+  return cleanContent(content);
 };
 
 /**

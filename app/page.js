@@ -248,6 +248,7 @@ export default function Home() {
                 onClipboardImport={handleClipboardImport}
                 language={language}
                 onLanguageChange={handleLanguageChange}
+                currentCode={code}
               />
               <div className="flex-1">
                 <CodeEditor
