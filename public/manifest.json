@@ -1,0 +1,80 @@
+{
+  "_comment": "{{CHENGQI: Action: Added; Timestamp: 2025-06-13 09:21:00 +08:00; Reason: Create PWA manifest for better SEO and user experience; }}",
+  "name": "SVG Viewer Next - 在线SVG/HTML编辑器",
+  "short_name": "SVG Viewer Next",
+  "description": "专业的在线SVG和HTML编辑器，支持实时预览、代码格式化、多种导出格式",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#4299e1",
+  "orientation": "any",
+  "scope": "/",
+  "lang": "zh-CN",
+  "dir": "ltr",
+  "categories": ["productivity", "developer", "utilities"],
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "any",
+      "type": "image/x-icon"
+    },
+    {
+      "src": "/favicon-16x16.png",
+      "sizes": "16x16",
+      "type": "image/png"
+    },
+    {
+      "src": "/favicon-32x32.png",
+      "sizes": "32x32",
+      "type": "image/png"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    },
+    {
+      "src": "/android-chrome-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/android-chrome-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshot-wide.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "SVG Viewer Next 主界面"
+    },
+    {
+      "src": "/screenshot-narrow.png",
+      "sizes": "640x1136",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "SVG Viewer Next 移动端界面"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "新建SVG",
+      "short_name": "新建",
+      "description": "创建新的SVG文件",
+      "url": "/?action=new-svg",
+      "icons": [
+        {
+          "src": "/favicon-32x32.png",
+          "sizes": "32x32"
+        }
+      ]
+    }
+  ],
+  "prefer_related_applications": false
+} 

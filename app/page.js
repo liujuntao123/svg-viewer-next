@@ -216,21 +216,28 @@ export default function Home() {
   }
 
   return (
-    <div 
+    <main 
       className="h-screen w-screen flex flex-col bg-background transition-theme overflow-hidden"
       onDragEnter={handleDragEnter}
       onDragLeave={handleDragLeave}
       onDragOver={handleDragOver}
       onDrop={handleDrop}
+      role="application"
+      aria-label="SVG和HTML在线编辑器"
     >
+      {/* 隐藏的SEO标题，仅供搜索引擎使用 */}
+      <h1 className="sr-only">SVG Viewer Next - 专业的在线SVG和HTML编辑器</h1>
+      
       {/* 顶部标题栏 */}
-      <HeaderBar
-        theme={theme}
-        onThemeChange={handleThemeChange}
-      />
+      <header role="banner">
+        <HeaderBar
+          theme={theme}
+          onThemeChange={handleThemeChange}
+        />
+      </header>
 
       {/* 主编辑区 */}
-      <div className="flex-1 relative">
+      <section className="flex-1 relative" aria-label="编辑器工作区">
         <PanelGroup 
           direction="horizontal"
           onLayout={handlePanelResize}
@@ -241,7 +248,8 @@ export default function Home() {
             minSize={20}
             className="relative"
           >
-            <div className="h-full border-r border-border flex flex-col">
+            <article className="h-full border-r border-border flex flex-col" aria-label="代码编辑区">
+              <h2 className="sr-only">代码编辑器</h2>
               <EditorToolBar
                 onFormat={handleFormat}
                 onCodeChange={handleCodeChange}
@@ -260,24 +268,30 @@ export default function Home() {
                   onLanguageChange={handleLanguageChange}
                 />
               </div>
-            </div>
+            </article>
           </Panel>
 
           {/* 可调整分割线 */}
-          <PanelResizeHandle className="w-1 bg-border hover:bg-primary transition-colors duration-200 cursor-col-resize" />
+          <PanelResizeHandle 
+            className="w-1 bg-border hover:bg-primary transition-colors duration-200 cursor-col-resize"
+            aria-label="调整面板大小"
+          />
 
           {/* 预览面板 */}
           <Panel 
             defaultSize={panelSizes[1]} 
             minSize={20}
           >
-            <PreviewPanel
-              content={code}
-              background={background}
-              onBackgroundChange={handleBackgroundChange}
-              language={language}
-              theme={theme}
-            />
+            <article className="h-full" aria-label="预览区">
+              <h2 className="sr-only">实时预览</h2>
+              <PreviewPanel
+                content={code}
+                background={background}
+                onBackgroundChange={handleBackgroundChange}
+                language={language}
+                theme={theme}
+              />
+            </article>
           </Panel>
         </PanelGroup>
 
@@ -286,9 +300,11 @@ export default function Home() {
           <div 
             ref={dragOverlayRef}
             className="absolute inset-0 z-50 drag-overlay flex items-center justify-center"
+            role="dialog"
+            aria-label="文件拖拽导入"
           >
             <div className="text-center">
-              <div className="text-4xl mb-4">📁</div>
+              <div className="text-4xl mb-4" role="img" aria-label="文件图标">📁</div>
               <div className="text-lg font-medium text-primary">
                 释放文件以导入
               </div>
@@ -298,13 +314,13 @@ export default function Home() {
             </div>
           </div>
         )}
-      </div>
+      </section>
 
       {/* 响应式提示 - 仅在小屏幕显示 */}
-      <div className="md:hidden fixed bottom-4 left-4 right-4 bg-card border border-border rounded-lg p-3 text-sm text-muted-foreground shadow-lg">
+      <aside className="md:hidden fixed bottom-4 left-4 right-4 bg-card border border-border rounded-lg p-3 text-sm text-muted-foreground shadow-lg" role="complementary" aria-label="移动端使用提示">
         <div className="font-medium mb-1">移动端提示</div>
         <div>建议在桌面端使用以获得最佳编辑体验</div>
-      </div>
-    </div>
+      </aside>
+    </main>
   );
 }
