@@ -190,9 +190,9 @@ const PreviewPanel = ({
   }, [background]);
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="h-full flex flex-col relative">
       {/* 预览控制栏 */}
-      <div className="flex items-center justify-between p-3 border-b border-border bg-card/50">
+      <div className="absolute top-0 left-0 right-0 flex items-center justify-between p-3 border-b border-border bg-card/80 backdrop-blur-sm shadow-sm">
         {/* 左侧：背景切换按钮组 */}
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-1 bg-card border border-border rounded-md p-1 shadow-sm">
